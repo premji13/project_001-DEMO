@@ -1,9 +1,11 @@
-# project_001-school
+# project_001-DEMO
 Its a project that includes everything I've worked on at Neotrack and Innoboon.
 It includes functionalities from the following projects:
-    *   Inmar
-    *   CAIP
-    *   Insorce
-    *   Rocketlane
-    *   Transient
-Hence the name NCIRT.
+    *   Inmar           -   extensive API and DB focused.
+    *   CAIP            -   API, DB, chatbot, file upload.
+    *   Insorce         -   API, DB, chatbot, e-mail.
+    *   Equity Research -   API, DB, webscraping, automation, chatbot
+    *   Sales AI        -   API, DB, chatbot, voice.
+    *   Rocketlane      -   API, DB, chatbot, meeting transcripts.
+    *   Transient       -   extensive API and DB focused.
+Hence the name NCIESRT.
