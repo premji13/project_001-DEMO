@@ -6,13 +6,14 @@ from app.database import get_db
 from app.crud import get_user_by_email, create_user
 from app.security import verify_password, create_access_token, hash_password
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
+from app.email import send_otp_email
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(user: UserRegister, db: Session = Depends(get_db)):
     """
-    Register a new user.
+    Register a new user and send OTP to email.
     """
     existing_user = get_user_by_email(db, email=user.email)
     if existing_user:
@@ -27,6 +28,25 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already exists"
         )
+    
+    # Send OTP email
+    # Note: In a real app, you might want to handle email failure more gracefully
+    # For now, we'll send it synchronously and fail if email doesn't work
+    from app.crud import get_latest_otp
+    otp_record = get_latest_otp(db, new_user.id)
+    
+    if otp_record:
+        email_sent = send_otp_email(
+            to_email=new_user.email,
+            otp=otp_record.otp,
+            username=new_user.username
+        )
+        
+        if not email_sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send OTP email. Please try again."
+            )
     
     return new_user
 
@@ -87,3 +107,4 @@ async def get_current_user(
         )
     
     return user
+
