@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from datetime import timedelta
-from app.schemas import UserRegister, UserLogin, Token, UserResponse
+from app.schemas import UserRegister, UserLogin, Token, UserResponse, OTPVerify, VerificationResponse
 from app.database import get_db
-from app.crud import get_user_by_email, create_user
+from app.crud import get_user_by_email, create_user, verify_otp, mark_user_verified, delete_user_otps
 from app.security import verify_password, create_access_token, hash_password
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.email import send_otp_email
@@ -30,8 +30,6 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
         )
     
     # Send OTP email
-    # Note: In a real app, you might want to handle email failure more gracefully
-    # For now, we'll send it synchronously and fail if email doesn't work
     from app.crud import get_latest_otp
     otp_record = get_latest_otp(db, new_user.id)
     
@@ -50,6 +48,41 @@ async def register(user: UserRegister, db: Session = Depends(get_db)):
     
     return new_user
 
+@router.post("/verify-otp", response_model=VerificationResponse)
+async def verify_email_otp(otp_data: OTPVerify, db: Session = Depends(get_db)):
+    """
+    Verify OTP and mark user's email as verified.
+    """
+    user = get_user_by_email(db, email=otp_data.email)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    if user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already verified"
+        )
+    
+    # Verify OTP
+    if not verify_otp(db, user.id, otp_data.otp):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OTP. Please request a new one."
+        )
+    
+    # Mark user as verified and clean up OTPs
+    verified_user = mark_user_verified(db, user.id)
+    delete_user_otps(db, user.id)
+    
+    return {
+        "message": "Email verified successfully! You can now login.",
+        "user": verified_user
+    }
+
 @router.post("/login", response_model=Token)
 async def login(user: UserLogin, db: Session = Depends(get_db)):
     """
@@ -62,6 +95,13 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid email or password",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Require verified email before allowing login
+    if not db_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please verify your email before logging in."
         )
     
     if not db_user.is_active:
