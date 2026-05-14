@@ -9,3 +9,6 @@ It includes functionalities from the following projects:
     *   Rocketlane      -   API, DB, chatbot, meeting transcripts.
     *   Transient       -   extensive API and DB focused.
 Hence the name NCIESRT.
+
+1.INMAR -   Extensive API and DB focused
+    *   Login APIs  -   create user, e-mail verification, login, logout, 

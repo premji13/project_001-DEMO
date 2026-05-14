@@ -1,8 +1,16 @@
 from fastapi import FastAPI
+from app.database import init_db
+from app.routers import router as user_router
 
-app=FastAPI()
+app = FastAPI(title="User API", version="1.0.0")
+
+@app.on_event("startup")
+async def startup():
+    init_db()
 
 @app.get('/')
 def home():
-    return {'msg':'Welcome to the homepage.'}
+    return {'msg': 'Welcome to the User API. Use /docs for API documentation.'}
+
+app.include_router(user_router)
 
