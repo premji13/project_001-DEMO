@@ -1,0 +1,51 @@
+=================================================================
+                    SETUP EMAIL (OTP) - QUICK START
+=================================================================
+
+STEP 1: Add Gmail Credentials to .env
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Edit your .env file and add:
+
+    GMAIL_EMAIL=your-email@gmail.com
+    GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+
+Where:
+  - your-email@gmail.com = Your Gmail address
+  - xxxx xxxx xxxx xxxx = 16-character Gmail App Password
+
+STEP 2: Get Gmail App Password (if you don't have it)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Go to: myaccount.google.com
+2. Click: Security (left sidebar)
+3. Enable: 2-Step Verification (if not enabled)
+4. Go to: App passwords
+5. Select: Mail & Linux
+6. Click: Generate
+7. Copy: The 16-character password shown
+
+STEP 3: Restart Your Application
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+    uvicorn app.main:app --reload
+
+STEP 4: Test It
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Register a new user:
+
+    curl -X POST http://localhost:8000/users/register \
+      -H "Content-Type: application/json" \
+      -d '{
+        "email": "test@example.com",
+        "username": "testuser",
+        "password": "password123"
+      }'
+
+Check your test@example.com inbox for the OTP email!
+
+=================================================================
+
+📖 For detailed documentation, see: OTP_EMAIL_SETUP.md
+
