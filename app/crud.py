@@ -4,6 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from app.models import User, EmailOTP
 from app.schemas import UserRegister
 from app.security import hash_password
+from app.enums import UserType
 from datetime import datetime, timedelta
 
 
@@ -23,7 +24,7 @@ def create_user(db: Session, user: UserRegister) -> User:
         username=user.username,
         hashed_password=hashed_password,
         is_active=True,
-        user_type="user"
+        user_type=UserType.USER
     )
     db.add(db_user)
     try:

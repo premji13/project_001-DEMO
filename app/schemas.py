@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional
+from app.enums import UserType
 
 class UserRegister(BaseModel):
     email: EmailStr
@@ -21,7 +22,7 @@ class UserResponse(BaseModel):
     username: str
     is_active: bool
     is_verified: bool
-    user_type: str
+    user_type: UserType
     created_at: datetime
 
     class Config:
