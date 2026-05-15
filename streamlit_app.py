@@ -1,11 +1,15 @@
 import streamlit as st
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 st.set_page_config(page_title="User Auth", layout="centered")
 
 st.title("User Authentication")
 
-BASE_URL = st.sidebar.text_input("API Base URL", value="http://localhost:8000")
+BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 tabs = st.tabs(["Register", "Login"])
 
