@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from app.database import init_db
-from app.routers import router as user_router
+from app.routers import user_router, chatbot_router
 
 app = FastAPI(title="User API", version="1.0.0")
 
@@ -13,4 +13,4 @@ def home():
     return {'msg': 'Welcome to the User API. Use /docs for API documentation.'}
 
 app.include_router(user_router)
-
+app.include_router(chatbot_router)

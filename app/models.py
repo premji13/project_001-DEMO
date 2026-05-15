@@ -20,6 +20,7 @@ class User(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     email_otps = relationship("EmailOTP", back_populates="user")
+    documents = relationship("Document", back_populates="user")
 
 
 class EmailOTP(Base):
@@ -32,3 +33,17 @@ class EmailOTP(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="email_otps")
+
+
+class Document(Base):
+    __tablename__ = "documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    file_name = Column(String, nullable=False)
+    file_type = Column(String, nullable=False)  # txt, pdf, docx, doc
+    chunk_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="documents")
