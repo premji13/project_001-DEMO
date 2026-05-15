@@ -11,11 +11,17 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class OTPVerify(BaseModel):
+    email: EmailStr
+    otp: str = Field(..., min_length=6, max_length=6)
+
 class UserResponse(BaseModel):
     id: int
     email: str
     username: str
     is_active: bool
+    is_verified: bool
+    user_type: str
     created_at: datetime
 
     class Config:
@@ -28,3 +34,8 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     email: Optional[str] = None
+
+class VerificationResponse(BaseModel):
+    message: str
+    user: UserResponse
+

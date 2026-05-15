@@ -22,7 +22,8 @@ def create_user(db: Session, user: UserRegister) -> User:
         email=user.email,
         username=user.username,
         hashed_password=hashed_password,
-        is_active=True
+        is_active=True,
+        user_type="user"
     )
     db.add(db_user)
     try:
@@ -61,4 +62,12 @@ def verify_otp(db: Session, user_id: int, otp: str) -> bool:
 def delete_user_otps(db: Session, user_id: int):
     db.query(EmailOTP).filter(EmailOTP.user_id == user_id).delete()
     db.commit()
+
+def mark_user_verified(db: Session, user_id: int) -> User:
+    user = get_user_by_id(db, user_id)
+    if user:
+        user.is_verified = True
+        db.commit()
+        db.refresh(user)
+    return user
 
