@@ -8,7 +8,7 @@ app = FastAPI(title="User API", version="1.0.0")
 async def startup():
     init_db()
 
-@app.get('/')
+@app.get('/health')
 def home():
     return {'msg': 'Welcome to the User API. Use /docs for API documentation.'}
 
