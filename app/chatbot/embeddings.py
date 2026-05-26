@@ -1,6 +1,5 @@
 """Embeddings and vector database integration with Pinecone."""
 from typing import List
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 from app.chatbot.config import (
     PINECONE_API_KEY, PINECONE_INDEX_NAME, PINECONE_ENVIRONMENT
@@ -8,7 +7,7 @@ from app.chatbot.config import (
 
 
 class PineconeVectorDB:
-    """Manage Pinecone vector database operations."""
+    """Manage Pinecone vector database operations with serverless embeddings."""
 
     def __init__(self):
         if not PINECONE_API_KEY:
@@ -16,18 +15,15 @@ class PineconeVectorDB:
         
         self.pc = Pinecone(api_key=PINECONE_API_KEY)
         self.index_name = PINECONE_INDEX_NAME
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="all-MiniLM-L6-v2"
-        )
         self._ensure_index_exists()
 
     def _ensure_index_exists(self):
-        """Create index if it doesn't exist."""
+        """Create index with serverless embeddings if it doesn't exist."""
         indexes = [idx.name for idx in self.pc.list_indexes()]
         if self.index_name not in indexes:
             self.pc.create_index(
                 name=self.index_name,
-                dimension=384,  # all-MiniLM-L6-v2 output dimension
+                dimension=1536,  # OpenAI/Pinecone inference dimension
                 metric="cosine",
                 spec=ServerlessSpec(
                     cloud="aws",
@@ -36,31 +32,37 @@ class PineconeVectorDB:
             )
 
     def store_chunks(self, chunks: List[str], document_id: str, user_id: int) -> int:
-        """Store document chunks in Pinecone."""
+        """Store document chunks in Pinecone using serverless embeddings."""
         index = self.pc.Index(self.index_name)
         vectors_to_upsert = []
         
         for i, chunk in enumerate(chunks):
-            embedding = self.embeddings.embed_query(chunk)
             vector_id = f"{document_id}_{i}"
             metadata = {
                 "document_id": str(document_id),
                 "user_id": str(user_id),
                 "chunk_index": i,
-                "text": chunk[:500]  # Store preview
+                "text": chunk[:500]
             }
-            vectors_to_upsert.append((vector_id, embedding, metadata))
+            vectors_to_upsert.append({
+                "id": vector_id,
+                "values": [],  # Let Pinecone inference generate embeddings
+                "metadata": metadata,
+                "sparse_values": None,
+                "data": chunk
+            })
         
+        # Use upsert with data field for serverless embeddings
         index.upsert(vectors=vectors_to_upsert)
         return len(vectors_to_upsert)
 
     def search_chunks(self, query: str, document_id: str, top_k: int = 5) -> List[dict]:
-        """Search for relevant chunks."""
+        """Search for relevant chunks using Pinecone inference."""
         index = self.pc.Index(self.index_name)
-        query_embedding = self.embeddings.embed_query(query)
         
+        # Query with text directly - Pinecone will handle embedding
         results = index.query(
-            vector=query_embedding,
+            data=query,
             top_k=top_k,
             filter={"document_id": {"$eq": str(document_id)}},
             include_metadata=True
