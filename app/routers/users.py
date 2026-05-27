@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from uuid import uuid4
 from datetime import timedelta
 from app.schemas import UserRegister, UserLogin, Token, UserResponse, OTPVerify, VerificationResponse
 from app.database import get_db
@@ -7,6 +8,8 @@ from app.crud import get_user_by_email, create_user, verify_otp, mark_user_verif
 from app.security import verify_password, create_access_token, hash_password
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES
 from app.email import send_otp_email
+from app.models import User
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -119,6 +122,42 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
         "access_token": access_token,
         "token_type": "bearer",
         "user": db_user
+    }
+
+from app.enums import UserType
+
+@router.post("/guest-login", response_model=Token)
+async def guest_login(db: Session = Depends(get_db)):
+
+    random_id = uuid4().hex[:8]
+
+    guest_user = User(
+        email=f"guest_{random_id}@guest.com",
+        username=f"guest_{random_id}",
+        hashed_password="",
+        is_active=True,
+        is_verified=True,
+        user_type=UserType.GUEST
+    )
+
+    db.add(guest_user)
+    db.commit()
+    db.refresh(guest_user)
+
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+
+    access_token = create_access_token(
+        data={
+            "sub": guest_user.email,
+            "user_type": guest_user.user_type.value
+        },
+        expires_delta=access_token_expires
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": guest_user
     }
 
 @router.get("/me", response_model=UserResponse)
