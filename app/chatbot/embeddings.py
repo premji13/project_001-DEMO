@@ -1,11 +1,22 @@
 """Embeddings and vector database integration with Pinecone."""
+import os
 from typing import List
 from pinecone import Pinecone, ServerlessSpec
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings
+from openai import OpenAI
 from app.chatbot.config import (
     PINECONE_API_KEY, PINECONE_INDEX_NAME, PINECONE_ENVIRONMENT
 )
 
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+def get_embedding(text: str):
+    response = client.embeddings.create(
+        model="text-embedding-3-small",
+        input=text
+    )
+
+    return response.data[0].embedding
 
 class PineconeVectorDB:
     """Manage Pinecone vector database operations with lightweight embeddings."""
@@ -17,10 +28,10 @@ class PineconeVectorDB:
         self.pc = Pinecone(api_key=PINECONE_API_KEY)
         self.index_name = PINECONE_INDEX_NAME
         # Ultra-lightweight embedding model (33MB, 384-dim, optimized for CPU)
-        self.embeddings = HuggingFaceEmbeddings(
-            model_name="thenlper/gte-small",
-            cache_folder=None
-        )
+        # self.embeddings = HuggingFaceEmbeddings(
+        #     model_name="thenlper/gte-small",
+        #     cache_folder=None
+        # )
         self._ensure_index_exists()
 
     def _ensure_index_exists(self):
@@ -43,7 +54,8 @@ class PineconeVectorDB:
         vectors_to_upsert = []
         
         for i, chunk in enumerate(chunks):
-            embedding = self.embeddings.embed_query(chunk)
+            # embedding = self.embeddings.embed_query(chunk)
+            embedding = get_embedding(chunk)
             vector_id = f"{document_id}_{i}"
             metadata = {
                 "document_id": str(document_id),
@@ -59,7 +71,8 @@ class PineconeVectorDB:
     def search_chunks(self, query: str, document_id: str, top_k: int = 5) -> List[dict]:
         """Search for relevant chunks."""
         index = self.pc.Index(self.index_name)
-        query_embedding = self.embeddings.embed_query(query)
+        # query_embedding = self.embeddings.embed_query(query)
+        query_embedding = get_embedding(query)
         
         results = index.query(
             vector=query_embedding,
