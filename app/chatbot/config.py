@@ -3,7 +3,8 @@ from os import getenv
 
 # Groq configuration
 GROQ_API_KEY = getenv("GROQ_API_KEY")
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "openai/gpt-oss-120b"
 
 # Pinecone configuration
 PINECONE_API_KEY = getenv("PINECONE_API_KEY")
