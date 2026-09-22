@@ -15,3 +15,8 @@ def home():
 app.include_router(user_router)
 app.include_router(chatbot_router)
 
+def get_weather(temperature):
+    if temperature>20:
+        return 'Hot'
+    else:
+        return 'Cold'
